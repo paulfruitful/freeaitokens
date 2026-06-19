@@ -12,6 +12,7 @@
   "files": [
     "index.js",
     "src",
+    "examples",
     "README.md"
   ],
   "keywords": [
@@ -25,7 +26,7 @@
     "node": ">=18"
   },
   "scripts": {
-    "check": "node --check index.js && node --check src/errors.js && node --check src/playwright.js && node --check src/plugin-registry.js && node --check src/session.js && node --check src/client.js && node --check src/plugins/generic-chat.js",
+    "check": "node --check index.js && node --check src/errors.js && node --check src/playwright.js && node --check src/plugin-registry.js && node --check src/session.js && node --check src/client.js && node --check src/plugins/generic-chat.js && node --check src/plugins/chatgpt-web.js && node --check examples/chatgpt-web-session.js",
     "smoke": "node -e \"const lib = require('./index.js'); console.log(Object.keys(lib).sort().join(','))\"",
     "test": "npm run check && npm run smoke"
   },

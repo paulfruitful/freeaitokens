@@ -8,6 +8,7 @@ It gives you:
 - a `ChatSession` for multi-turn conversations
 - a `PluginRegistry` for named adapters
 - a `createSelectorPlugin()` helper for sites that can be automated with DOM selectors
+- a bundled `createChatGPTWebPlugin()` implementation for the ChatGPT-style page structure captured in your markdown
 
 ## Install
 
@@ -83,6 +84,71 @@ console.log(await session.sendText('Continue with more detail'));
 await session.close();
 ```
 
+## ChatGPT web implementation
+
+The collected page details in your markdown point to a ChatGPT-style web app with these stable selectors:
+
+- prompt editor: `div#prompt-textarea`
+- send button: `button.composer-submit-btn` or `button[data-testid="send-button"]`
+- assistant turns: `div[data-message-author-role="assistant"]`
+- streaming marker: `.result-streaming`
+
+This package now includes a plugin factory tuned for that flow:
+
+```js
+const {
+  PlaywrightChatClient,
+  createChatGPTWebPlugin,
+} = require('freeaitokens');
+
+const client = new PlaywrightChatClient({
+  launchOptions: {
+    headless: false,
+  },
+  contextOptions: {
+    storageState: '.auth/chatgpt.json',
+  },
+});
+
+const plugin = createChatGPTWebPlugin({
+  url: 'https://chatgpt.com/',
+});
+
+const session = client.createSession({ plugin });
+
+await session.start();
+console.log(await session.sendText('Hello'));
+console.log(await session.sendText('Continue with more detail'));
+await session.close();
+```
+
+### How this implementation works
+
+`createChatGPTWebPlugin()` follows the interaction pattern shown in your exported DevTools session:
+
+1. open the page and wait for `#prompt-textarea` to become a visible `contenteditable` editor
+2. type into the ProseMirror editor with keyboard events instead of `.fill()`
+3. wait for the send button to become enabled
+4. click the visible send button, with `Enter` as a fallback
+5. monitor `div[data-message-author-role="assistant"]` for new assistant turns
+6. treat `.result-streaming` as the in-progress marker and wait for the response to settle before returning text
+
+The returned response includes:
+
+- `text`: the aggregated new assistant content for that turn
+- `segments`: the raw new assistant blocks captured during that turn
+- `lastSegment`: the last captured assistant block
+
+This matters because some turns can render multiple assistant blocks, such as a widget followed by explanatory text.
+
+### Running the example script
+
+```bash
+node examples/chatgpt-web-session.js "Hello" "Continue with more detail"
+```
+
+The example keeps a single Playwright session open so each prompt continues the same conversation.
+
 ## Writing your own plugin
 
 A plugin is just an object with a `name` and a `send()` function. `open()` and `close()` are optional.
@@ -129,6 +195,7 @@ Use `inputMode: 'keyboard'` for editors built with `contenteditable` rather than
 
 ## Notes
 
-- No platform-specific selectors are bundled by default. Browser chat UIs change often, so this setup gives you a stable plugin surface and a generic selector-based adapter rather than shipping brittle hard-coded integrations.
+- A ChatGPT web plugin is bundled as a reference implementation for the selector pattern captured in your markdown. For everything else, prefer `createSelectorPlugin()` or a custom plugin so you can adapt as the target UI changes.
 - If a platform requires login, use Playwright `storageState` or your plugin `setup()` hook to establish the authenticated session.
+- Browser chat UIs change often. Expect to revisit selectors and response extraction logic over time.
 - Some platforms have automation restrictions or terms that may prohibit scripted access. Verify that your usage is allowed before deploying this library against a third-party service.

@@ -10,6 +10,17 @@ function createApp() {
 
   app.use(express.json());
 
+  // CORS middleware to support local clients (e.g. index.html)
+  app.use((req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    if (req.method === "OPTIONS") {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+
   // Health check — useful for SDK connection tests
   app.get("/", (req, res) => {
     res.json({ status: "ok", service: "freeaitokens" });

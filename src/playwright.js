@@ -55,9 +55,12 @@ async function launchBrowser(options = {}) {
   return browserFactory.launch(launchOptions);
 }
 
-function resolveClosePageOnClose(connectOverCDP, createdPage) {
+function resolveClosePageOnClose(connectOverCDP) {
+  // In CDP attach mode the script is a guest in the user's browser.
+  // Never close tabs by default — the user decides their own tab lifecycle.
+  // Pass closePageOnSessionClose: true explicitly to override.
   if (connectOverCDP.closePageOnSessionClose === null) {
-    return createdPage;
+    return false;
   }
 
   return connectOverCDP.closePageOnSessionClose;
@@ -69,7 +72,7 @@ async function resolveAttachedPage(context, connectOverCDP) {
   if (connectOverCDP.pageMode === "new") {
     return {
       page: await context.newPage(),
-      closePageOnClose: resolveClosePageOnClose(connectOverCDP, true),
+      closePageOnClose: resolveClosePageOnClose(connectOverCDP),
     };
   }
 
@@ -79,7 +82,7 @@ async function resolveAttachedPage(context, connectOverCDP) {
         connectOverCDP.pageMode === "last"
           ? existingPages[existingPages.length - 1]
           : existingPages[0],
-      closePageOnClose: resolveClosePageOnClose(connectOverCDP, false),
+      closePageOnClose: resolveClosePageOnClose(connectOverCDP),
     };
   }
 
@@ -91,7 +94,7 @@ async function resolveAttachedPage(context, connectOverCDP) {
 
   return {
     page: await context.newPage(),
-    closePageOnClose: resolveClosePageOnClose(connectOverCDP, true),
+    closePageOnClose: resolveClosePageOnClose(connectOverCDP),
   };
 }
 

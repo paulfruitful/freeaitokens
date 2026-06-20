@@ -114,7 +114,6 @@ function looksLikeCloudflareChallenge(bodySnippet, headers) {
     text.includes("window._cf_chl_opt") ||
     text.includes("/cdn-cgi/challenge-platform/") ||
     text.includes("challenge-error-text") ||
-    Boolean(headers["cf-ray"]) ||
     Boolean(headers["cf-mitigated"])
   );
 }

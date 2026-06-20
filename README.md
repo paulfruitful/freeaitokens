@@ -1,14 +1,6 @@
 # freeaitokens
 
-`freeaitokens` is a plugin-based library for getting free llm
- tokens from model providers
-It gives you:
-
-- a `PlaywrightChatClient` for one-off requests
-- a `ChatSession` for multi-turn conversations
-- a `PluginRegistry` for named adapters
-- a `createSelectorPlugin()` helper for sites that can be automated with DOM selectors
-- a bundled `createChatGPTWebPlugin()` implementation for the ChatGPT-style page structure captured in your markdown
+`freeaitokens` runs a local HTTP server that speaks the OpenAI Chat Completions API, backed by a Playwright-automated browser. Point any OpenAI SDK or tool at `http://localhost:5000/v1` and it will drive a real browser to get responses.
 
 ## Install
 
@@ -17,7 +9,109 @@ npm install
 npx playwright install chromium
 ```
 
-## Quick start
+## Start the server
+
+```bash
+npm start
+```
+
+The server listens on port 5000 by default.
+
+```
+freeaitokens OpenAI-compatible server
+  Listening : http://0.0.0.0:5000
+  Endpoints :
+    POST http://127.0.0.1:5000/v1/chat/completions
+    GET  http://127.0.0.1:5000/v1/models
+```
+
+## Use with the OpenAI Node.js SDK
+
+```js
+const OpenAI = require('openai');
+
+const openai = new OpenAI({
+  apiKey: 'any-value',
+  baseURL: 'http://localhost:5000/v1',
+});
+
+const completion = await openai.chat.completions.create({
+  model: 'chatgpt-web',
+  messages: [{ role: 'user', content: 'Say hello in one sentence.' }],
+});
+
+console.log(completion.choices[0].message.content);
+```
+
+Streaming works too:
+
+```js
+const stream = await openai.chat.completions.create({
+  model: 'chatgpt-web',
+  messages: [{ role: 'user', content: 'Tell me a short story.' }],
+  stream: true,
+});
+
+for await (const chunk of stream) {
+  process.stdout.write(chunk.choices[0]?.delta?.content ?? '');
+}
+```
+
+## Configuration (environment variables)
+
+| Variable | Default | Description |
+|---|---|---|
+| `PORT` | `5000` | Server port |
+| `HOST` | `0.0.0.0` | Server bind address |
+| `CHAT_URL` | `https://chatgpt.com/` | Target chat page |
+| `CDP_ENDPOINT_URL` | — | Attach to an already-running Chrome instance |
+| `CDP_TAB_MODE` | `new` | `new`, `first`, or `last` (CDP mode only) |
+| `USER_DATA_DIR` | — | Persistent Chrome profile path (ignored when CDP is set) |
+| `HEADLESS` | `true` | `false` to show the browser window |
+| `MANUAL_VERIFICATION` | `false` | Wait for you to solve Cloudflare challenges |
+| `DEFAULT_TIMEOUT_MS` | `300000` | Per-request browser timeout (ms) |
+
+## Recommended: attach to an already-open Chrome profile
+
+Using a profile you've already logged in to avoids Cloudflare challenges on every request.
+
+**Step 1** — launch Chrome with CDP enabled (run once, keep it open):
+
+```bat
+scripts\launch-chrome-cdp.cmd
+```
+
+**Step 2** — start the server in attach mode:
+
+```powershell
+$env:CDP_ENDPOINT_URL = "http://127.0.0.1:9222"
+npm start
+```
+
+**Step 3** — call it like any OpenAI endpoint.
+
+## Available models
+
+| Model ID | Description |
+|---|---|
+| `chatgpt-web` | ChatGPT web interface via Playwright |
+
+Any model name is accepted in the request; the response always reflects the actual model used.
+
+---
+
+## Library quick start
+
+The Playwright client and plugin system are still importable directly if you need lower-level access.
+
+```js
+const {
+  PlaywrightChatClient,
+  createSelectorPlugin,
+} = require('freeaitokens');
+```
+
+### Old quick start
 
 ```js
 const {

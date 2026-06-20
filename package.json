@@ -1,7 +1,7 @@
 {
   "name": "freeaitokens",
   "version": "1.0.0",
-  "description": "Plugin-based Playwright library for browser chat platforms",
+  "description": "OpenAI-compatible local server backed by Playwright browser automation",
   "license": "ISC",
   "author": "Paul Fruitful",
   "type": "commonjs",
@@ -11,6 +11,7 @@
   },
   "files": [
     "index.js",
+    "server.js",
     "src",
     "examples",
     "scripts",
@@ -27,11 +28,13 @@
     "node": ">=18"
   },
   "scripts": {
-    "check": "node --check index.js && node --check src/errors.js && node --check src/chrome-attach.js && node --check src/playwright.js && node --check src/plugin-registry.js && node --check src/session.js && node --check src/client.js && node --check src/plugins/generic-chat.js && node --check src/plugins/chatgpt-web.js && node --check examples/chatgpt-web-session.js",
+    "start": "node server.js",
+    "check": "node --check index.js && node --check server.js && node --check src/errors.js && node --check src/chrome-attach.js && node --check src/playwright.js && node --check src/plugin-registry.js && node --check src/session.js && node --check src/client.js && node --check src/plugins/generic-chat.js && node --check src/plugins/chatgpt-web.js && node --check src/server/app.js && node --check src/server/openai-format.js && node --check src/server/prompt-builder.js && node --check src/server/browser-client.js && node --check src/server/middleware/error-handler.js && node --check src/server/routes/chat.js && node --check src/server/routes/models.js && node --check examples/chatgpt-web-session.js",
     "smoke": "node -e \"const lib = require('./index.js'); console.log(Object.keys(lib).sort().join(','))\"",
     "test": "npm run check && npm run smoke"
   },
   "dependencies": {
+    "express": "^4.18.0",
     "playwright": "^1.44.0"
   }
 }

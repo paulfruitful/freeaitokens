@@ -56,11 +56,10 @@ async function launchBrowser(options = {}) {
 }
 
 function resolveClosePageOnClose(connectOverCDP) {
-  // In CDP attach mode the script is a guest in the user's browser.
-  // Never close tabs by default — the user decides their own tab lifecycle.
-  // Pass closePageOnSessionClose: true explicitly to override.
+  // Close the tab when the session ends by default.
+  // Pass closePageOnSessionClose: false explicitly to keep it open.
   if (connectOverCDP.closePageOnSessionClose === null) {
-    return false;
+    return true;
   }
 
   return connectOverCDP.closePageOnSessionClose;

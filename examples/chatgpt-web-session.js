@@ -44,9 +44,7 @@ async function main() {
   let client;
 
   if (cdpEndpointURL) {
-    console.error(
-      `Attaching to an already-running Chrome instance at ${cdpEndpointURL} using page mode ${cdpTabMode}.`,
-    );
+    console.error(` ${cdpEndpointURL} using page mode ${cdpTabMode}.`);
 
     if (userDataDir) {
       console.error(
@@ -112,7 +110,7 @@ async function main() {
             prompt,
             response: response.text,
             segments: response.segments || [],
-            networkDiagnostics: response.networkDiagnostics || null,
+            //     networkDiagnostics: response.networkDiagnostics || null,
           },
           null,
           2,

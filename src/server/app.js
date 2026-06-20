@@ -1,11 +1,15 @@
 "use strict";
 
 const express = require("express");
+const { initDb } = require("./db");
 const { chatRouter } = require("./routes/chat");
 const { modelsRouter } = require("./routes/models");
 const { errorHandler } = require("./middleware/error-handler");
 
 function createApp() {
+  // Initialize database
+  initDb();
+
   const app = express();
 
   app.use(express.json());

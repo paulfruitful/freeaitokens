@@ -18,7 +18,7 @@ function modelObject(id, ownedBy = "freeaitokens") {
 }
 
 // Non-streaming ChatCompletion response
-function buildCompletion(id, model, content) {
+function buildCompletion(id, model, content, promptTokens = 0, completionTokens = 0) {
   return {
     id,
     object: "chat.completion",
@@ -38,9 +38,9 @@ function buildCompletion(id, model, content) {
       },
     ],
     usage: {
-      prompt_tokens: 0,
-      completion_tokens: 0,
-      total_tokens: 0,
+      prompt_tokens: promptTokens,
+      completion_tokens: completionTokens,
+      total_tokens: promptTokens + completionTokens,
     },
   };
 }

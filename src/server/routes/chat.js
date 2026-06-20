@@ -11,8 +11,16 @@ const {
   sseData,
 } = require("../openai-format");
 const { classifyError } = require("../middleware/error-handler");
+const db = require("../db");
 
 const router = express.Router();
+
+// Calculate token count where 1 token is 3/4 of a word
+function countTokens(text) {
+  if (!text) return 0;
+  const words = text.match(/\S+/g) || [];
+  return Math.ceil(words.length / 0.75);
+}
 
 // Validate a single message object
 function isValidMessage(message) {
@@ -38,6 +46,7 @@ function tokenize(text) {
 }
 
 async function handleCompletion(req, res) {
+  const startTime = Date.now();
   const { messages, model = "chatgpt-web", stream = false } = req.body || {};
 
   // ── Validate ────────────────────────────────────────────────────────────
@@ -77,6 +86,9 @@ async function handleCompletion(req, res) {
     );
   }
 
+  const promptTokens = countTokens(prompt);
+  const id = completionId();
+
   // ── Browser session ──────────────────────────────────────────────────────
   const client = createClient();
   const plugin = createPlugin();
@@ -87,6 +99,17 @@ async function handleCompletion(req, res) {
     await session.start();
     response = await session.send(prompt);
   } catch (error) {
+    const durationMs = Date.now() - startTime;
+    db.logRequest({
+      requestId: id,
+      model,
+      promptTokens,
+      completionTokens: 0,
+      status: "error",
+      errorMessage: error.message || String(error),
+      durationMs,
+    });
+
     const { status, body } = classifyError(error);
     return res.status(status).json(body);
   } finally {
@@ -94,12 +117,24 @@ async function handleCompletion(req, res) {
   }
 
   const content = response.text || "";
-  const id = completionId();
+  const completionTokens = countTokens(content);
+  const durationMs = Date.now() - startTime;
+
+  db.logRequest({
+    requestId: id,
+    model,
+    promptTokens,
+    completionTokens,
+    status: "success",
+    errorMessage: null,
+    durationMs,
+  });
+
   const created = Math.floor(Date.now() / 1000);
 
   // ── Non-streaming ────────────────────────────────────────────────────────
   if (!stream) {
-    return res.json(buildCompletion(id, model, content));
+    return res.json(buildCompletion(id, model, content, promptTokens, completionTokens));
   }
 
   // ── Streaming (SSE) ──────────────────────────────────────────────────────

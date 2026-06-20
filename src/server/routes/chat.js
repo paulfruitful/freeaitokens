@@ -12,6 +12,7 @@ const {
 } = require("../openai-format");
 const { classifyError } = require("../middleware/error-handler");
 const db = require("../db");
+const { ensureChromeRunning } = require("../chrome-manager");
 
 const router = express.Router();
 
@@ -90,6 +91,16 @@ async function handleCompletion(req, res) {
   const id = completionId();
 
   // ── Browser session ──────────────────────────────────────────────────────
+  // If we are connecting to Chrome over CDP, verify that it's running and relaunch if down
+  if (process.env.CDP_ENDPOINT_URL) {
+    try {
+      await ensureChromeRunning();
+    } catch (launchError) {
+      console.error("[FAI] Failed to auto-recover Chrome:", launchError);
+      // Let it fail normally during connectOverCDP if recovery completely fails
+    }
+  }
+
   const client = createClient();
   const plugin = createPlugin();
   const session = client.createSession({ plugin });

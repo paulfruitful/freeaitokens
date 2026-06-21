@@ -23,6 +23,28 @@ function countTokens(text) {
   return Math.ceil(words.length / 0.75);
 }
 
+// Clean markdown code blocks and leading JSON labels from response content
+function cleanResponseContent(text) {
+  if (typeof text !== "string") {
+    return "";
+  }
+
+  let cleaned = text.trim();
+
+  // 1. Strip triple backticks markdown code blocks (e.g. ```json ... ``` or ``` ... ```)
+  const markdownBlockRegex = /^```(?:json)?\s*([\s\S]*?)\s*```$/i;
+  const match = cleaned.match(markdownBlockRegex);
+  if (match) {
+    cleaned = match[1].trim();
+  }
+
+  // 2. Strip leading "JSON" or "json" prefix followed by a newline (and optional spaces)
+  // only if it's followed by a JSON start character like [ or {
+  cleaned = cleaned.replace(/^json\s*\n\s*(?=[{\[])/i, "");
+
+  return cleaned.trim();
+}
+
 // Validate a single message object
 function isValidMessage(message) {
   if (!message || typeof message !== "object") {
@@ -127,7 +149,7 @@ async function handleCompletion(req, res) {
     session.close().catch(() => {});
   }
 
-  const content = response.text || "";
+  const content = cleanResponseContent(response.text || "");
   const completionTokens = countTokens(content);
   const durationMs = Date.now() - startTime;
 

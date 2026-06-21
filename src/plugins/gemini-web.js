@@ -734,6 +734,7 @@ async function waitForAssistantResponse({
   config,
   diagnosticsCollector,
   diagnosticsSnapshot,
+  lastSeenTextByPage,
 }) {
   const deadline = Date.now() + config.responseTimeoutMs;
   let sawStreaming = false;
@@ -780,6 +781,11 @@ async function waitForAssistantResponse({
     }
 
     if (candidate) {
+      const cleaned = candidate.trim();
+      if (cleaned.length > 0 && lastSeenTextByPage) {
+        lastSeenTextByPage.set(page, candidate);
+      }
+
       if (candidate === lastCandidate && !busy) {
         if (!stableSince) {
           stableSince = Date.now();
@@ -876,6 +882,7 @@ function createGeminiWebPlugin(options = {}) {
     createManualVerificationConfig(manualVerification);
   const collectorsByPage = new WeakMap();
   const turnSnapshotsByPage = new WeakMap();
+  const lastSeenTextByPage = new WeakMap();
 
   function ensureCollector(page) {
     let collector = collectorsByPage.get(page);
@@ -945,6 +952,8 @@ function createGeminiWebPlugin(options = {}) {
       }
     },
     async beforeSend(context) {
+      lastSeenTextByPage.delete(context.page);
+
       const collector = ensureCollector(context.page);
       const existingDiagnostics = collector.summarizeSince();
       const turnSnapshot = existingDiagnostics.blockingResponse
@@ -1000,15 +1009,23 @@ function createGeminiWebPlugin(options = {}) {
         ...context,
         diagnosticsCollector,
         diagnosticsSnapshot,
+        lastSeenTextByPage,
       });
     },
     async extractResponse({ page, responseDetails, defaultText }) {
       const segments = responseDetails.newTexts
         .map(normalizeText)
         .filter(Boolean);
-      const text = segments.length
+      let text = segments.length
         ? segments.join("\n\n")
         : normalizeText(defaultText);
+
+      const lastSeenText = lastSeenTextByPage.get(page);
+      if (lastSeenText && (!text || text.trim().length === 0)) {
+        text = normalizeText(lastSeenText);
+      }
+      lastSeenTextByPage.delete(page);
+
       const diagnosticsCollector = collectorsByPage.get(page) || null;
       const diagnosticsSnapshot = turnSnapshotsByPage.get(page) || null;
       let networkDiagnostics = null;

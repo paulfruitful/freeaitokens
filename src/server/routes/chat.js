@@ -69,7 +69,7 @@ function tokenize(text) {
 
 async function handleCompletion(req, res) {
   const startTime = Date.now();
-  const { messages, model = "chatgpt-web", stream = false } = req.body || {};
+  const { messages, model = "chatgpt-web", stream = false, tab } = req.body || {};
 
   // ── Validate ────────────────────────────────────────────────────────────
   if (!Array.isArray(messages) || messages.length === 0) {
@@ -122,7 +122,7 @@ async function handleCompletion(req, res) {
     }
   }
 
-  let client = createClient();
+  let client = createClient(model, tab);
   let plugin = createPlugin(model);
   let session = client.createSession({ plugin });
 
@@ -135,7 +135,7 @@ async function handleCompletion(req, res) {
         console.warn("[FAI] Initial browser connection / session start failed. Attempting force-restart and retry...", startError);
         try {
           await forceRestartChrome();
-          client = createClient();
+          client = createClient(model, tab);
           plugin = createPlugin(model);
           session = client.createSession({ plugin });
           console.log("[FAI] Chrome restarted. Retrying session start...");

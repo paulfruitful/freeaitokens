@@ -13,6 +13,7 @@ const AISTUDIO_WEB_SELECTORS = Object.freeze({
   modelSelectorTrigger: 'button.model-selector-card',
   modelOptionsPanel: 'ms-sliding-right-panel .model-options-container, .model-options-container',
   modelButton: 'button.content-button',
+  errorIndicator: '.model-error',
 });
 
 const DEFAULT_NETWORK_DIAGNOSTIC_PATTERNS = Object.freeze([

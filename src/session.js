@@ -89,6 +89,7 @@ class ChatSession {
     this.closePageOnClose = true;
     this.closeContextOnClose = true;
     this.closeBrowserOnClose = true;
+    this.isConnectedOverCDP = false;
     this.started = false;
     this.closed = false;
     this.history = [];
@@ -119,6 +120,7 @@ class ChatSession {
       this.closePageOnClose = launchedSession.closePageOnClose !== false;
       this.closeContextOnClose = launchedSession.closeContextOnClose !== false;
       this.closeBrowserOnClose = launchedSession.closeBrowserOnClose !== false;
+      this.isConnectedOverCDP = launchedSession.isConnectedOverCDP === true;
       this.page.setDefaultTimeout(this.defaultTimeoutMs);
       this.page.setDefaultNavigationTimeout(this.defaultTimeoutMs);
 
@@ -205,7 +207,15 @@ class ChatSession {
     }
 
     if (this.closeBrowserOnClose) {
-      await safeClose(this.browser);
+      if (this.isConnectedOverCDP && this.browser && typeof this.browser.disconnect === "function") {
+        try {
+          await this.browser.disconnect();
+        } catch (error) {
+          // Ignore cleanup/disconnect errors.
+        }
+      } else {
+        await safeClose(this.browser);
+      }
     }
 
     this.page = null;
@@ -214,6 +224,7 @@ class ChatSession {
     this.closePageOnClose = true;
     this.closeContextOnClose = true;
     this.closeBrowserOnClose = true;
+    this.isConnectedOverCDP = false;
     this.started = false;
     this.closed = true;
 

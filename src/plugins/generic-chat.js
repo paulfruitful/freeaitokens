@@ -46,6 +46,12 @@ function validateSelectorPluginConfig(config) {
     );
   }
 
+  if (config.selectors.errorIndicator && typeof config.selectors.errorIndicator !== 'string') {
+    throw new PluginValidationError(
+      `Selector plugin "${config.name}" has an invalid \`selectors.errorIndicator\` value.`
+    );
+  }
+
   if (config.inputMode && !['fill', 'keyboard'].includes(config.inputMode)) {
     throw new PluginValidationError(
       `Selector plugin "${config.name}" has an invalid \`inputMode\`. Use "fill" or "keyboard".`
@@ -264,6 +270,21 @@ async function waitForStableResponse(page, config, previousResponse) {
   let stableSince = 0;
 
   while (Date.now() < deadline) {
+    if (config.selectors.errorIndicator) {
+      const errorLocator = page.locator(config.selectors.errorIndicator);
+      try {
+        if (await errorLocator.count() > 0 && await errorLocator.first().isVisible()) {
+          const rawError = await readLocatorText(errorLocator.first());
+          const cleanError = rawError.replace(/^error\s+/i, '').trim();
+          throw new Error(`AI Model Error: ${cleanError || 'An internal error occurred.'}`);
+        }
+      } catch (err) {
+        if (err.message && err.message.startsWith('AI Model Error:')) {
+          throw err;
+        }
+      }
+    }
+
     const currentResponse = await captureResponseSummary(
       page,
       config.selectors.responseItems

@@ -20,18 +20,36 @@ function readBooleanEnv(name, defaultValue) {
 
 // Build a PlaywrightChatClient from environment variables.
 // This is inexpensive — no browser is launched here.
-function createClient() {
+function createClient(model, tab) {
   const cdpEndpointURL = process.env.CDP_ENDPOINT_URL || null;
   const userDataDir = process.env.USER_DATA_DIR || null;
   const headless = readBooleanEnv("HEADLESS", true);
   const cdpTabMode = process.env.CDP_TAB_MODE || "new";
 
   if (cdpEndpointURL) {
+    let mode = cdpTabMode;
+    let closePage = cdpTabMode === "last" || cdpTabMode === "first" ? false : true;
+
+    const isGeminiOrAIStudio = model && (
+      model === "gemini-web" ||
+      model.startsWith("aistudio-") ||
+      model === "aistudio-web" ||
+      model === "aistudio"
+    );
+    if (isGeminiOrAIStudio) {
+      closePage = false;
+      if (tab === "new") {
+        mode = "new";
+      } else {
+        mode = "last";
+      }
+    }
+
     return new PlaywrightChatClient({
       ...attachToChromeProfile({
         endpointURL: cdpEndpointURL,
-        pageMode: cdpTabMode,
-        closePageOnSessionClose: cdpTabMode === "last" || cdpTabMode === "first" ? false : true,
+        pageMode: mode,
+        closePageOnSessionClose: closePage,
       }),
     });
   }

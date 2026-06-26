@@ -8,6 +8,10 @@ const router = express.Router();
 const SUPPORTED_MODELS = [
   modelObject("chatgpt-web"),
   modelObject("gemini-web"),
+  modelObject("aistudio-web"),
+  modelObject("aistudio-gemini-3.5-flash"),
+  modelObject("aistudio-gemini-3.1-flash-lite"),
+  modelObject("aistudio-gemini-3.1-pro-preview"),
 ];
 const SUPPORTED_MODEL_IDS = new Set(SUPPORTED_MODELS.map((m) => m.id));
 

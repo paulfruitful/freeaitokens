@@ -148,7 +148,7 @@ async function handleCompletion(req, res) {
         throw startError;
       }
     }
-    response = await session.send(prompt);
+    response = await session.send(prompt, { messages });
   } catch (error) {
     const durationMs = Date.now() - startTime;
     db.logRequest({

@@ -15,6 +15,10 @@ const {
   createGeminiWebPlugin,
 } = require("./src/plugins/gemini-web");
 const {
+  AISTUDIO_WEB_SELECTORS,
+  createAIStudioWebPlugin,
+} = require("./src/plugins/aistudio-web");
+const {
   DEFAULT_CHROME_CDP_ENDPOINT,
   attachToChromeProfile,
 } = require("./src/chrome-attach");
@@ -40,6 +44,8 @@ module.exports = {
   createChatGPTWebPlugin,
   GEMINI_WEB_SELECTORS,
   createGeminiWebPlugin,
+  AISTUDIO_WEB_SELECTORS,
+  createAIStudioWebPlugin,
   DEFAULT_CHROME_CDP_ENDPOINT,
   attachToChromeProfile,
   FreeAITokensError,

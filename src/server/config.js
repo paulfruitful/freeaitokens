@@ -9,6 +9,7 @@ const CONFIG_METADATA = {
   PORT: { description: "Main Server API HTTP Port", type: "number", requiresRestart: true, default: "5000" },
   HOST: { description: "Main Server API Bind Host Address", type: "string", requiresRestart: true, default: "0.0.0.0" },
   CHAT_URL: { description: "ChatGPT Web Interface Target URL", type: "string", requiresRestart: false, default: "https://chatgpt.com/" },
+  AISTUDIO_CHAT_URL: { description: "AI Studio Web Interface Target URL", type: "string", requiresRestart: false, default: "https://aistudio.google.com/prompts/new_chat" },
   CDP_PORT: { description: "Chrome Remote Debugging Port (CDP)", type: "number", requiresRestart: true, default: "9222" },
   USER_DATA_DIR: { description: "Chrome Persistent Profile Directory", type: "string", requiresRestart: false, default: ".playwright/chrome-cdp-profile" },
   DEFAULT_TIMEOUT_MS: { description: "Per-request Playwright Browser Timeout (ms)", type: "number", requiresRestart: false, default: "300000" },

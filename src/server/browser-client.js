@@ -4,6 +4,7 @@ const {
   PlaywrightChatClient,
   createChatGPTWebPlugin,
   createGeminiWebPlugin,
+  createAIStudioWebPlugin,
   attachToChromeProfile,
 } = require("../../index");
 
@@ -30,6 +31,7 @@ function createClient() {
       ...attachToChromeProfile({
         endpointURL: cdpEndpointURL,
         pageMode: cdpTabMode,
+        closePageOnSessionClose: cdpTabMode === "last" || cdpTabMode === "first" ? false : true,
       }),
     });
   }
@@ -43,6 +45,23 @@ function createClient() {
 // Build a web plugin from environment variables.
 function createPlugin(model = "chatgpt-web") {
   const manualVerification = readBooleanEnv("MANUAL_VERIFICATION", false);
+
+  if (model.startsWith("aistudio-") || model === "aistudio-web" || model === "aistudio") {
+    let targetModel = "gemini-3.5-flash"; // default
+    let isDefaultModel = false;
+    if (model.startsWith("aistudio-") && model !== "aistudio-web") {
+      targetModel = model.replace("aistudio-", "");
+    } else {
+      isDefaultModel = true;
+    }
+    const url = process.env.AISTUDIO_CHAT_URL || "https://aistudio.google.com/prompts/new_chat";
+    return createAIStudioWebPlugin({
+      url,
+      manualVerification,
+      modelName: targetModel,
+      isDefaultModel,
+    });
+  }
 
   if (model === "gemini-web") {
     const url = process.env.CHAT_URL || "https://gemini.google.com/";
